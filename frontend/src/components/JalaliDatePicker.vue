@@ -1,43 +1,56 @@
 <template>
-  <div class="relative">
-    <input
-      v-model="displayValue"
-      @focus="openCalendar"
+  <div class="position-relative">
+    <v-text-field
+      :model-value="displayValue"
+      @click="openCalendar"
       readonly
       placeholder="تاریخ(شمسی)"
-      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-      :class="{ 'border-red-500': error }
-      "
+      variant="outlined"
+      density="comfortable"
+      :error="error"
+      prepend-inner-icon="mdi-calendar"
+      hide-details="auto"
     />
 
-    <div v-if="show" class="absolute z-30 mt-2 bg-white border rounded-md shadow-lg p-3 w-64">
-      <div class="flex items-center justify-between mb-2">
-        <button @click="prevMonth" class="px-2">‹</button>
-        <div class="text-sm font-medium">{{ monthLabel }} {{ currentYear }}</div>
-        <button @click="nextMonth" class="px-2">›</button>
+    <v-card
+      v-if="show"
+      class="position-absolute jalali-calendar"
+      elevation="8"
+      rounded="lg"
+    >
+      <!-- Header -->
+      <div class="d-flex align-center justify-space-between pa-3 border-b">
+        <v-btn icon="mdi-chevron-right" variant="text" density="compact" @click="prevMonth" />
+        <span class="text-body-2 font-weight-medium">{{ monthLabel }} {{ currentYear }}</span>
+        <v-btn icon="mdi-chevron-left" variant="text" density="compact" @click="nextMonth" />
       </div>
 
-      <div class="grid grid-cols-7 gap-1 text-xs text-center text-gray-600 mb-2">
-        <div v-for="d in weekDays" :key="d">{{ d }}</div>
-      </div>
+      <!-- Week days -->
+      <div class="calendar-grid pa-2">
+        <div v-for="d in weekDays" :key="d" class="calendar-cell text-center text-caption text-medium-emphasis font-weight-medium">
+          {{ d }}
+        </div>
 
-      <div class="grid grid-cols-7 gap-1 text-sm">
-        <div v-for="blank in blanks" :key="`b-${blank}`" class="h-8"></div>
+        <!-- Blank cells -->
+        <div v-for="blank in blanks" :key="`b-${blank}`" class="calendar-cell" />
 
+        <!-- Day cells -->
         <button
           v-for="day in daysInMonth"
           :key="day"
+          class="calendar-cell calendar-day"
+          :class="{ 'selected': selectedDay === day }"
           @click="selectDay(day)"
-          :class="['h-8 rounded-md', selectedDay === day ? 'bg-blue-600 text-white' : 'hover:bg-blue-50']"
         >
           {{ day }}
         </button>
       </div>
 
-      <div class="flex justify-end mt-3">
-        <button @click="closeCalendar" class="text-md text-rose-600 px-2 py-1">بستن</button>
+      <!-- Close -->
+      <div class="d-flex justify-end pa-2 border-t">
+        <v-btn color="error" variant="text" size="small" @click="closeCalendar">بستن</v-btn>
       </div>
-    </div>
+    </v-card>
   </div>
 </template>
 
@@ -79,7 +92,6 @@ watch(() => props.modelValue, (v) => {
     selectedDay.value = p.d;
     displayValue.value = formatPersian(p.y, p.m, p.d);
   } else {
-    // if empty, set current to today
     const pd = new PersianDate();
     currentYear.value = pd.year();
     currentMonth.value = pd.month();
@@ -121,22 +133,16 @@ const blanks = computed(() => {
     const startPd = new PersianDate([currentYear.value, currentMonth.value, 1]);
     const startGreg = startPd.toCalendar('gregorian').toLocale('en').format('YYYY-MM-DD');
     const d = new Date(startGreg);
-    // Get weekday index: convert JS Sunday(0)-Saturday(6) to Persian week starting Saturday
-    // We'll map: JS 6(Sat) -> 0, 0(Sun)->1, 1->2, ..., 5->6
     const jsWeekday = d.getDay();
-    const persianWeekIndex = (jsWeekday + 1) % 7; // Saturday -> 0
+    const persianWeekIndex = (jsWeekday + 1) % 7;
     return Array.from({ length: persianWeekIndex }, (_, i) => i);
   } catch (e) {
     return [];
   }
 });
 
-function openCalendar() {
-  show.value = true;
-}
-function closeCalendar() {
-  show.value = false;
-}
+function openCalendar() { show.value = true; }
+function closeCalendar() { show.value = false; }
 
 function prevMonth() {
   if (currentMonth.value === 1) {
@@ -160,11 +166,48 @@ function selectDay(day) {
   const val = formatPersian(currentYear.value, currentMonth.value, day);
   displayValue.value = val;
   emit('update:modelValue', val);
-  // Close after selection
   show.value = false;
 }
 </script>
 
 <style scoped>
-/* simple scrollbar for dropdown */
+.jalali-calendar {
+  top: 100%;
+  left: 0;
+  z-index: 200;
+  width: 260px;
+  background: white;
+  margin-top: 4px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-cell {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.calendar-day {
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.calendar-day:hover {
+  background: rgba(var(--v-theme-primary), 0.1);
+}
+
+.calendar-day.selected {
+  background: rgb(var(--v-theme-primary));
+  color: white;
+}
 </style>

@@ -1,71 +1,72 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-      <!-- Logo / Title -->
-      <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-          <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </div>
-        <h1 class="text-2xl font-bold text-gray-800">مدیریت حساب‌ها</h1>
-        <p class="text-gray-500 mt-1 text-sm">لطفاً وارد حساب کاربری خود شوید</p>
-      </div>
+  <v-container fluid class="fill-height login-bg">
+    <v-row justify="center" align="center" class="fill-height">
+      <v-col cols="12" sm="8" md="5" lg="4">
+        <v-card rounded="xl" elevation="8" class="pa-6">
+          <!-- Logo / Title -->
+          <div class="text-center mb-6">
+            <v-avatar color="blue-lighten-4" size="64" class="mb-4">
+              <v-icon icon="mdi-file-document-outline" color="blue" size="32" />
+            </v-avatar>
+            <div class="text-h6 font-weight-bold">مدیریت حساب‌ها</div>
+            <div class="text-caption text-medium-emphasis mt-1">لطفاً وارد حساب کاربری خود شوید</div>
+          </div>
 
-      <!-- Login Form -->
-      <form @submit.prevent="handleLogin" class="space-y-5">
-        <!-- Username -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">نام کاربری</label>
-          <input
-            v-model="form.username"
-            type="text"
-            placeholder="نام کاربری را وارد کنید"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-            :class="{ 'border-red-500': errors.username }"
-            autocomplete="username"
-          />
-          <p v-if="errors.username" class="text-red-500 text-xs mt-1">{{ errors.username }}</p>
-        </div>
+          <!-- Login Form -->
+          <v-form @submit.prevent="handleLogin">
+            <!-- Username -->
+            <v-text-field
+              v-model="form.username"
+              label="نام کاربری"
+              placeholder="نام کاربری را وارد کنید"
+              variant="outlined"
+              density="comfortable"
+              :error-messages="errors.username"
+              autocomplete="username"
+              class="mb-3"
+              prepend-inner-icon="mdi-account-outline"
+            />
 
-        <!-- Password -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">رمز عبور</label>
-          <input
-            v-model="form.password"
-            type="password"
-            placeholder="رمز عبور را وارد کنید"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-            :class="{ 'border-red-500': errors.password }"
-            autocomplete="current-password"
-          />
-          <p v-if="errors.password" class="text-red-500 text-xs mt-1">{{ errors.password }}</p>
-        </div>
+            <!-- Password -->
+            <v-text-field
+              v-model="form.password"
+              label="رمز عبور"
+              placeholder="رمز عبور را وارد کنید"
+              type="password"
+              variant="outlined"
+              density="comfortable"
+              :error-messages="errors.password"
+              autocomplete="current-password"
+              class="mb-3"
+              prepend-inner-icon="mdi-lock-outline"
+            />
 
-        <!-- Error message -->
-        <div v-if="loginError" class="bg-red-50 border border-red-200 rounded-lg p-3">
-          <p class="text-red-600 text-sm text-center">{{ loginError }}</p>
-        </div>
+            <!-- Error message -->
+            <v-alert
+              v-if="loginError"
+              type="error"
+              variant="tonal"
+              density="compact"
+              class="mb-4"
+              :text="loginError"
+            />
 
-        <!-- Submit button -->
-        <button
-          type="submit"
-          :disabled="loading"
-          class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span v-if="loading" class="flex items-center justify-center gap-2">
-            <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            در حال ورود...
-          </span>
-          <span v-else>ورود به سیستم</span>
-        </button>
-      </form>
-    </div>
-  </div>
+            <!-- Submit button -->
+            <v-btn
+              type="submit"
+              color="primary"
+              block
+              size="large"
+              :loading="loading"
+              :disabled="loading"
+            >
+              ورود به سیستم
+            </v-btn>
+          </v-form>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup>
@@ -130,3 +131,10 @@ async function handleLogin() {
   }
 }
 </script>
+
+<style scoped>
+.login-bg {
+  background: linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 100%);
+  min-height: 100vh;
+}
+</style>

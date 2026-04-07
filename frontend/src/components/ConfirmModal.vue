@@ -1,53 +1,51 @@
 <template>
-  <!-- Confirm Delete Modal -->
-  <Teleport to="body">
-    <div
-      v-if="isOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      @click.self="$emit('cancel')"
-    >
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-        <!-- Icon -->
-        <div class="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mx-auto mb-4">
-          <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-          </svg>
-        </div>
+  <v-dialog :model-value="isOpen" max-width="400" persistent @click:outside="$emit('cancel')">
+    <v-card rounded="xl" class="pa-6">
+      <!-- Icon -->
+      <div class="d-flex justify-center mb-4">
+        <v-avatar color="red-lighten-4" size="64">
+          <v-icon icon="mdi-delete-outline" color="error" size="32" />
+        </v-avatar>
+      </div>
 
-        <!-- Title -->
-        <h3 class="text-xl font-bold text-gray-800 text-center mb-2">{{ title }}</h3>
+      <!-- Title -->
+      <v-card-title class="text-center text-h6 font-weight-bold pa-0 mb-2">
+        {{ title }}
+      </v-card-title>
 
-        <!-- Message -->
-        <p class="text-gray-500 text-center mb-6">{{ message }}</p>
+      <!-- Message -->
+      <v-card-text class="text-center text-medium-emphasis pa-0 mb-6">
+        {{ message }}
+      </v-card-text>
 
-        <!-- Buttons -->
-        <div class="flex gap-3">
-          <button
+      <!-- Buttons -->
+      <v-row>
+        <v-col cols="6">
+          <v-btn
+            block
+            color="error"
+            size="large"
+            :loading="loading"
+            :disabled="loading"
             @click="$emit('confirm')"
-            :disabled="loading"
-            class="flex-1 bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition disabled:opacity-50"
           >
-            <span v-if="loading" class="flex items-center justify-center gap-2">
-              <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-              </svg>
-              در حال حذف...
-            </span>
-            <span v-else>بله، حذف شود</span>
-          </button>
-          <button
-            @click="$emit('cancel')"
+            بله، حذف شود
+          </v-btn>
+        </v-col>
+        <v-col cols="6">
+          <v-btn
+            block
+            color="grey-lighten-2"
+            size="large"
             :disabled="loading"
-            class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition"
+            @click="$emit('cancel')"
           >
             انصراف
-          </button>
-        </div>
-      </div>
-    </div>
-  </Teleport>
+          </v-btn>
+        </v-col>
+      </v-row>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup>

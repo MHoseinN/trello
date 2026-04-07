@@ -1,5 +1,7 @@
 <template>
-  <router-view />
+  <v-app :dir="'rtl'">
+    <router-view />
+  </v-app>
 </template>
 
 <script setup>

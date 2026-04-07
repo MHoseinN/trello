@@ -1,14 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 * {
-  font-family: 'Vazirmatn', 'IRANSans', Tahoma, sans-serif;
+  font-family: 'Vazirmatn', 'IRANSans', Tahoma, sans-serif !important;
 }
 
 body {
   direction: rtl;
-  background-color: #f3f4f6;
 }
 
 /* Custom scrollbar */
@@ -29,28 +24,13 @@ body {
   background: #a1a1a1;
 }
 
-/* Table styles */
+/* RTL overrides for Vuetify */
+.v-application {
+  direction: rtl;
+}
+
 .table-container {
-  @apply overflow-x-auto rounded-lg shadow;
-}
-
-/* Button base */
-.btn {
-  @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
-}
-
-.btn-primary {
-  @apply btn bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
-}
-
-.btn-success {
-  @apply btn bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
-}
-
-.btn-danger {
-  @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
-}
-
-.btn-secondary {
-  @apply btn bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-gray-400;
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }

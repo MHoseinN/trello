@@ -1,120 +1,154 @@
 <template>
-  <!-- Overlay -->
-  <Teleport to="body">
-    <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      @click.self="$emit('close')">
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh]">
-        <!-- Header -->
-        <div class="flex items-center justify-between p-5 border-b">
-          <h3 class="text-lg font-bold text-gray-800">
-            {{ isEditMode ? 'ویرایش حساب' : 'افزودن حساب جدید' }}
-          </h3>
-          <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 transition">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+  <v-dialog :model-value="isOpen" max-width="480" persistent @click:outside="$emit('close')">
+    <v-card rounded="xl">
+      <!-- Header -->
+      <v-card-title class="d-flex align-center justify-space-between pa-5 border-b">
+        <span class="text-h6 font-weight-bold">
+          {{ isEditMode ? 'ویرایش حساب' : 'افزودن حساب جدید' }}
+        </span>
+        <v-btn icon="mdi-close" variant="text" density="compact" @click="$emit('close')" />
+      </v-card-title>
 
-        <!-- Body -->
-        <form @submit.prevent class="p-5 space-y-4">
-          <!-- Customer dropdown (only shown when not in customer-specific mode) -->
-          <div v-if="!customerId">
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              مشتری <span class="text-red-500">*</span>
-            </label>
-            <div class="flex gap-2">
-              <div class="relative flex-1">
-                <input
+      <!-- Body -->
+      <v-card-text class="pa-5">
+        <v-form @submit.prevent>
+          <!-- Customer dropdown -->
+          <div v-if="!customerId" class="mb-4">
+            <div class="d-flex gap-2 align-start">
+              <div class="flex-grow-1 position-relative">
+                <v-text-field
                   v-model="customerSearch"
+                  label="مشتری"
+                  placeholder="جستجو یا انتخاب مشتری"
+                  variant="outlined"
+                  density="comfortable"
+                  :error-messages="errors.customer_id"
                   @focus="showDropdown = true"
                   @input="onCustomerInput"
                   @keydown.down.prevent="focusNext()"
                   @keydown.up.prevent="focusPrev()"
                   @keydown.enter.prevent="confirmHighlighted()"
                   @blur="onBlur"
-                  type="text"
-                  placeholder="جستجو یا انتخاب مشتری"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  :class="{ 'border-red-500': errors.customer_id }"
-                />
+                  :append-inner-icon="form.customer_id ? 'mdi-close' : undefined"
+                  @click:append-inner="clearCustomer"
+                >
+                  <template v-if="form.customer_id" #append-inner>
+                    <v-btn icon="mdi-close" size="x-small" variant="text" @click.stop="clearCustomer" />
+                  </template>
+                </v-text-field>
 
-                <button v-if="form.customer_id" type="button" @click="clearCustomer"
-                  class="absolute inset-y-0 left-0 px-2 text-sm text-gray-500">پاک</button>
-
-                <ul v-if="showDropdown && filteredCustomers.length" class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md max-h-48 overflow-auto">
-                  <li v-for="(c, idx) in filteredCustomers" :key="c.id"
+                <v-list
+                  v-if="showDropdown && filteredCustomers.length"
+                  class="position-absolute customer-dropdown"
+                  elevation="4"
+                  rounded="md"
+                  density="compact"
+                >
+                  <v-list-item
+                    v-for="(c, idx) in filteredCustomers"
+                    :key="c.id"
+                    :class="{ 'bg-blue-lighten-5': highlightedIndex === idx }"
                     @mousedown.prevent="selectCustomer(c)"
-                    :class="{'bg-blue-50': highlightedIndex === idx}"
-                    class="px-3 py-2 hover:bg-blue-50 cursor-pointer">{{ c.name }}</li>
-                </ul>
+                  >
+                    {{ c.name }}
+                  </v-list-item>
+                </v-list>
 
-                <p v-if="showDropdown && !filteredCustomers.length" class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-500">موردی یافت نشد</p>
+                <v-card
+                  v-if="showDropdown && !filteredCustomers.length"
+                  class="position-absolute customer-dropdown pa-3"
+                  elevation="4"
+                >
+                  <span class="text-caption text-medium-emphasis">موردی یافت نشد</span>
+                </v-card>
               </div>
-              <!-- Quick add customer button -->
-              <button type="button" @click="showNewCustomerInput = !showNewCustomerInput"
-                class="bg-green-100 text-green-700 px-3 py-2 rounded-lg text-sm hover:bg-green-200 transition whitespace-nowrap">
+
+              <v-btn
+                color="success"
+                variant="tonal"
+                @click="showNewCustomerInput = !showNewCustomerInput"
+                class="mt-1"
+              >
                 + مشتری جدید
-              </button>
+              </v-btn>
             </div>
+
             <!-- Quick add customer input -->
-            <div v-if="showNewCustomerInput" class="mt-2 flex gap-2">
-              <input v-model="newCustomerName" type="text" placeholder="نام مشتری جدید"
-                class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                @keydown.enter.prevent="addNewCustomer" />
-              <button type="button" @click="addNewCustomer" :disabled="addingCustomer"
-                class="bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700 transition disabled:opacity-50">
-                {{ addingCustomer ? '...' : 'افزودن' }}
-              </button>
+            <div v-if="showNewCustomerInput" class="d-flex gap-2 mt-2">
+              <v-text-field
+                v-model="newCustomerName"
+                placeholder="نام مشتری جدید"
+                variant="outlined"
+                density="compact"
+                hide-details
+                class="flex-grow-1"
+                @keydown.enter.prevent="addNewCustomer"
+              />
+              <v-btn
+                color="success"
+                :loading="addingCustomer"
+                :disabled="addingCustomer"
+                @click="addNewCustomer"
+              >
+                افزودن
+              </v-btn>
             </div>
-            <p v-if="errors.customer_id" class="text-red-500 text-xs mt-1">{{ errors.customer_id }}</p>
           </div>
 
-          <!-- Date (Persian picker) -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              تاریخ (شمسی) <span class="text-red-500">*</span>
-            </label>
+          <!-- Date -->
+          <div class="mb-4">
+            <div class="text-body-2 font-weight-medium mb-1">
+              تاریخ (شمسی) <span class="text-error">*</span>
+            </div>
             <JalaliDatePicker v-model="form.persianDate" :error="!!errors.date" />
-            <p v-if="errors.date" class="text-red-500 text-xs mt-1">{{ errors.date }}</p>
+            <div v-if="errors.date" class="text-error text-caption mt-1">{{ errors.date }}</div>
           </div>
 
           <!-- Price -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              قیمت (تومان) <span class="text-red-500">*</span>
-            </label>
-            <input v-model.number="form.price" type="number" min="0" step="1000" placeholder="مبلغ به تومان"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              :class="{ 'border-red-500': errors.price }" dir="ltr" />
-            <p v-if="formattedPrice" class="text-sm text-left text-gray-500 mt-1">{{ formattedPrice }}</p>
-            <p v-if="errors.price" class="text-red-500 text-xs mt-1">{{ errors.price }}</p>
-          </div>
+          <v-text-field
+            v-model.number="form.price"
+            label="قیمت (تومان)"
+            placeholder="مبلغ به تومان"
+            type="number"
+            min="0"
+            step="1000"
+            variant="outlined"
+            density="comfortable"
+            :error-messages="errors.price"
+            dir="ltr"
+            class="mb-2"
+          />
+          <div v-if="formattedPrice" class="text-caption text-medium-emphasis mb-4 text-left">{{ formattedPrice }}</div>
 
           <!-- Buttons -->
-          <div class="flex gap-3 pt-2">
-            <button type="button" @click="handleSubmit" @keydown="handleSubmit()" :disabled="saving"
-              class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50">
-              <span v-if="saving" class="flex items-center justify-center gap-2">
-                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                  </path>
-                </svg>
-                در حال ذخیره...
-              </span>
-              <span v-else>{{ isEditMode ? 'ذخیره تغییرات' : 'افزودن حساب' }}</span>
-            </button>
-            <button type="button" @click="$emit('close')"
-              class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition">
-              انصراف
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </Teleport>
+          <v-row class="mt-2">
+            <v-col cols="6">
+              <v-btn
+                block
+                color="primary"
+                size="large"
+                :loading="saving"
+                :disabled="saving"
+                @click="handleSubmit"
+              >
+                {{ isEditMode ? 'ذخیره تغییرات' : 'افزودن حساب' }}
+              </v-btn>
+            </v-col>
+            <v-col cols="6">
+              <v-btn
+                block
+                color="grey-lighten-2"
+                size="large"
+                @click="$emit('close')"
+              >
+                انصراف
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-form>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup>
@@ -141,7 +175,6 @@ const showNewCustomerInput = ref(false);
 const newCustomerName = ref('');
 const addingCustomer = ref(false);
 
-// Searchable customer UI state
 const customerSearch = ref('');
 const showDropdown = ref(false);
 const highlightedIndex = ref(-1);
@@ -176,20 +209,16 @@ const formattedPrice = computed(() => {
   }
 });
 
-// Populate form when editing or when modal opens
 watch(() => props.isOpen, (open) => {
   if (open) {
     resetForm();
     if (props.invoiceData) {
-      // Edit mode: populate fields
       form.customer_id = props.invoiceData.customer_id || '';
       form.persianDate = toPersianDate(props.invoiceData.date);
       form.price = props.invoiceData.price || '';
       form.description = props.invoiceData.description || '';
-      // Set customerSearch to existing name if available
       customerSearch.value = props.invoiceData.customer_name || '';
     } else {
-      // Add mode
       form.customer_id = props.customerId || '';
       if (props.customerId) {
         const c = props.customersList.find(x => String(x.id) === String(props.customerId));
@@ -209,6 +238,7 @@ function resetForm() {
   errors.price = '';
   showNewCustomerInput.value = false;
   newCustomerName.value = '';
+  customerSearch.value = '';
 }
 
 function validate() {
@@ -217,7 +247,6 @@ function validate() {
   errors.date = '';
   errors.price = '';
 
-  // Only validate customer if no customerId prop
   if (!props.customerId && !form.customer_id) {
     errors.customer_id = 'انتخاب مشتری الزامی است';
     valid = false;
@@ -227,7 +256,6 @@ function validate() {
     errors.date = 'تاریخ الزامی است';
     valid = false;
   } else {
-    // Validate persian date format YYYY/MM/DD
     const dateRegex = /^\d{4}\/\d{1,2}\/\d{1,2}$/;
     if (!dateRegex.test(form.persianDate)) {
       errors.date = 'فرمت تاریخ صحیح نیست (YYYY/MM/DD)';
@@ -235,7 +263,7 @@ function validate() {
     }
   }
 
-  if (!form.price || form.price <= 0 || form.price.length < 4) {
+  if (!form.price || form.price <= 0 || String(form.price).length < 4) {
     errors.price = 'قیمت الزامی است و باید بزرگتر از صفر باشد';
     valid = false;
   }
@@ -244,7 +272,6 @@ function validate() {
 }
 
 function onCustomerInput() {
-  // when typing, clear selected id until user picks
   if (!customerSearch.value) {
     form.customer_id = '';
   }
@@ -263,7 +290,6 @@ function clearCustomer() {
 }
 
 function onBlur() {
-  // delay to allow click selection
   setTimeout(() => { showDropdown.value = false; highlightedIndex.value = -1; }, 150);
 }
 
@@ -290,7 +316,6 @@ async function addNewCustomer() {
   addingCustomer.value = false;
 
   if (result.success) {
-    // Refresh customers list by re-fetching
     await invoiceStore.fetchCustomers();
     form.customer_id = result.data.id;
     newCustomerName.value = '';
@@ -306,7 +331,6 @@ async function handleSubmit() {
 
   saving.value = true;
 
-  // Convert Persian date to Gregorian
   const gregorianDate = toGregorianDate(form.persianDate);
 
   if (!gregorianDate) {
@@ -326,3 +350,14 @@ async function handleSubmit() {
   saving.value = false;
 }
 </script>
+
+<style scoped>
+.customer-dropdown {
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+}
+</style>
